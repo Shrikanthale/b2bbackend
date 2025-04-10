@@ -37,7 +37,7 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const logout = (req: Request, res: Response) => {
-    console.log("User logged out", req); // Log the logout event
+    console.log("User logged out", req); 
     res.status(200).json({ message: 'Logged out (token should be cleared client-side)' });
 };
 

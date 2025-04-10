@@ -1,11 +1,11 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../../utils/database';
 
-// Optional ID when creating new entries
+
 interface OrderItemAttributes {
     id: number;
     orderId: number;
-    productId: string; // Mongo ObjectId stored as string
+    productId: string; 
     name: string;
     price: number;
     quantity: number;

@@ -6,7 +6,7 @@ const cartItemSchema = new mongoose.Schema({
 });
 
 const cartSchema = new mongoose.Schema({
-    userId: { type: Number, required: true }, // match with SQL User ID
+    userId: { type: Number, required: true }, 
     items: [cartItemSchema],
 }, {
     timestamps: true,

@@ -16,10 +16,10 @@ export const getOrders = async (req: any, res: Response) => {
         const orderIds = orders.map(o => o.id);
         const items = await OrderItem.findAll({
             where: { orderId: orderIds },
-            // raw: true,
+           
         });
 
-        // Group items by orderId
+       
         const itemsGrouped: Record<number, OrderItem[]> = {};
         for (const item of items) {
             if (!itemsGrouped[item.orderId]) itemsGrouped[item.orderId] = [];
@@ -33,7 +33,7 @@ export const getOrders = async (req: any, res: Response) => {
             mongoProducts.map(p => [p._id.toString(), p.toObject()])
         );
 
-        // Construct full order data
+       
         const result = orders.map(order => ({
             id: order.id,
             createdAt: order.createdAt,

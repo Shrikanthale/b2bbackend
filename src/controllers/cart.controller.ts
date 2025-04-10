@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { Request, Response } from 'express';
 import Cart from '../models/mongo/Cart.model';
-import Product from '../models/mongo/Product.model'; // for population if needed
+import Product from '../models/mongo/Product.model'; 
 import Order from '../models/sql/Order';
 import OrderItem from '../models/sql/OrderItem';
 
@@ -14,14 +14,14 @@ export const checkout = async (req: any, res: Response) => {
             return res.status(400).json({ error: 'Cart is empty' });
         }
 
-        // 1. Create Order in SQL
+        
         const order = await Order.create({ userId });
 
-        // 2. Create Order Items
+       
         await cart.populate('items.productId');
 
         const orderItems = cart.items.map(item => ({
-            orderId: order?.id, // MongoDB uses _id
+            orderId: order?.id, 
             productId: item.productId?._id?.toString() ?? '',
             name: (item.productId as any)?.name ?? 'Unknown',
             price: (item.productId as any)?.price ?? 0,
@@ -30,7 +30,6 @@ export const checkout = async (req: any, res: Response) => {
 
         await OrderItem.bulkCreate(orderItems);
 
-        // 3. Clear the cart
         await Cart.deleteOne({ userId });
 
         res.status(201).json({ message: 'Checkout complete', orderId: order.id });
@@ -57,7 +56,7 @@ export const viewCart = async (req: any, res: Response) => {
 };
 
 export const addToCart = async (req: any, res: Response) => {
-    const userId = req.user?.userId; // assumed to be a number
+    const userId = req.user?.userId;
     const { productId, quantity } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(productId)) {
@@ -67,7 +66,7 @@ export const addToCart = async (req: any, res: Response) => {
     const productObjectId = new mongoose.Types.ObjectId(productId);
 
     try {
-        let cart = await Cart.findOne({ userId }); // userId is a number here
+        let cart = await Cart.findOne({ userId }); 
 
         if (!cart) {
             cart = await Cart.create({
