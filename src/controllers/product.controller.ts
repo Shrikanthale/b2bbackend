@@ -1,29 +1,36 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
+import Product from '../models/mongo/Product.model';
 
-export const getAllProducts = async (req: Request, res: Response, next: NextFunction) => {
-    // TODO: Implement logic to fetch all products
-    res.status(501).json({ message: 'Get all products endpoint not implemented' });
+export const addProduct = async (req: Request, res: Response) => {
+    try {
+        const product = await Product.create(req.body);
+        res.status(201).json(product);
+    } catch (err) {
+        res.status(400).json({ error: 'Add product failed', details: err });
+    }
 };
 
-export const getProductById = async (req: Request, res: Response, next: NextFunction) => {
-    const { productId } = req.params;
-    // TODO: Implement logic to fetch product by ID
-    res.status(501).json({ message: `Get product ${productId} endpoint not implemented` });
-};
+export const getProducts = async (req: Request, res: Response) => {
+    const { search, category, page = 1, limit = 10 } = req.query;
+    const query: any = {};
 
-export const createProduct = async (req: Request, res: Response, next: NextFunction) => {
-    // TODO: Implement logic to create a product (likely admin only)
-    res.status(501).json({ message: 'Create product endpoint not implemented' });
-};
+    if (search) {
+        query.name = { $regex: search as string, $options: 'i' };
+    }
 
-export const updateProduct = async (req: Request, res: Response, next: NextFunction) => {
-    const { productId } = req.params;
-    // TODO: Implement logic to update product by ID (likely admin only)
-    res.status(501).json({ message: `Update product ${productId} endpoint not implemented` });
-};
+    if (category) {
+        query.category = category;
+    }
 
-export const deleteProduct = async (req: Request, res: Response, next: NextFunction) => {
-    const { productId } = req.params;
-    // TODO: Implement logic to delete product by ID (likely admin only)
-    res.status(501).json({ message: `Delete product ${productId} endpoint not implemented` });
+    try {
+        const products = await Product.find(query)
+            .skip((+page - 1) * +limit)
+            .limit(+limit);
+
+        const total = await Product.countDocuments(query);
+
+        res.status(200).json({ data: products, total });
+    } catch (err) {
+        res.status(500).json({ error: 'Fetch failed', details: err });
+    }
 };

@@ -10,7 +10,8 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 import { handleError } from './helpers/error';
 import httpLogger from './middlewares/httpLogger';
 import router from './routes/index';
-
+import sequelize from './utils/database';
+import User from './models/sql/User';
 const app: express.Application = express();
 
 app.use(httpLogger);
@@ -61,6 +62,12 @@ function onListening() {
 }
 
 connectDB();
+
+
+sequelize.sync({ alter: true })  // Syncs DB and updates table
+  .then(() => console.log('DB synced'))
+  .catch((err) => console.error('DB sync error:', err));
+
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);

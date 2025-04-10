@@ -1,29 +1,30 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
+import Cart from '../models/mongo/Cart.model';
 
-// Assuming cart is tied to the logged-in user (requires auth middleware)
-export const getCart = async (req: Request, res: Response, next: NextFunction) => {
-    // TODO: Implement logic to get user's cart
-    res.status(501).json({ message: 'Get cart endpoint not implemented' });
-};
+export const addToCart = async (req: any, res: Response) => {
+    const userId = req.user?.userId; // from auth middleware
+    const { productId, quantity } = req.body;
 
-export const addItemToCart = async (req: Request, res: Response, next: NextFunction) => {
-    // TODO: Implement logic to add item to user's cart
-    res.status(501).json({ message: 'Add item to cart endpoint not implemented' });
-};
+    try {
+        let cart = await Cart.findOne({ userId });
 
-export const updateCartItem = async (req: Request, res: Response, next: NextFunction) => {
-    const { itemId } = req.params;
-    // TODO: Implement logic to update item quantity in user's cart
-    res.status(501).json({ message: `Update cart item ${itemId} endpoint not implemented` });
-};
+        if (!cart) {
+            cart = await Cart.create({
+                userId,
+                items: [{ productId, quantity }],
+            });
+        } else {
+            const existingItem = cart.items.find(item => item?.productId?.toString() === productId);
+            if (existingItem) {
+                existingItem.quantity += quantity;
+            } else {
+                cart.items.push({ productId, quantity });
+            }
+            await cart.save();
+        }
 
-export const removeCartItem = async (req: Request, res: Response, next: NextFunction) => {
-    const { itemId } = req.params;
-    // TODO: Implement logic to remove item from user's cart
-    res.status(501).json({ message: `Remove cart item ${itemId} endpoint not implemented` });
-};
-
-export const clearCart = async (req: Request, res: Response, next: NextFunction) => {
-    // TODO: Implement logic to clear user's cart
-    res.status(501).json({ message: `Clear cart endpoint not implemented` });
+        res.status(200).json({ message: 'Product added to cart', cart });
+    } catch (err) {
+        res.status(500).json({ error: 'Cart update failed', details: err });
+    }
 };
