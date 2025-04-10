@@ -5,5 +5,8 @@ import { authenticate } from '../middlewares/auth.middleware'; // Example middle
 const router = express.Router();
 
 router.post('/', authenticate, cartController.addToCart);
+router.get('/', authenticate, cartController.viewCart);
+router.post('/checkout', authenticate, cartController.checkout);
+
 
 export default router;

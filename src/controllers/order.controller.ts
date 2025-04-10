@@ -1,24 +1,51 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
+import Order from '../models/sql/Order';
+import OrderItem from '../models/sql/OrderItem';
+import Product from '../models/mongo/Product.model';
 
-// Assuming orders are tied to the logged-in user (requires auth middleware)
-export const createOrder = async (req: Request, res: Response, next: NextFunction) => {
-    // TODO: Implement logic to create an order from the cart
-    res.status(501).json({ message: 'Create order endpoint not implemented' });
-};
+export const getOrders = async (req: any, res: Response) => {
+    const userId = req.user?.userId;
 
-export const getUserOrders = async (req: Request, res: Response, next: NextFunction) => {
-    // TODO: Implement logic to get all orders for the current user
-    res.status(501).json({ message: 'Get user orders endpoint not implemented' });
-};
+    try {
+        const orders = await Order.findAll({
+            where: { userId },
+            order: [['createdAt', 'DESC']],
+            // raw: true,
+        });
 
-export const getOrderById = async (req: Request, res: Response, next: NextFunction) => {
-    const { orderId } = req.params;
-    // TODO: Implement logic to get a specific order (check ownership or admin role)
-    res.status(501).json({ message: `Get order ${orderId} endpoint not implemented` });
-};
+        const orderIds = orders.map(o => o.id);
+        const items = await OrderItem.findAll({
+            where: { orderId: orderIds },
+            // raw: true,
+        });
 
-export const updateOrderStatus = async (req: Request, res: Response, next: NextFunction) => {
-    const { orderId } = req.params;
-    // TODO: Implement logic to update order status (likely admin only)
-    res.status(501).json({ message: `Update order status ${orderId} endpoint not implemented` });
+        // Group items by orderId
+        const itemsGrouped: Record<number, OrderItem[]> = {};
+        for (const item of items) {
+            if (!itemsGrouped[item.orderId]) itemsGrouped[item.orderId] = [];
+            itemsGrouped[item.orderId].push(item);
+        }
+
+        const productIds = [...new Set(items.map(item => item.productId))];
+
+        const mongoProducts = await Product.find({ _id: { $in: productIds } });
+        const productMap = Object.fromEntries(
+            mongoProducts.map(p => [p._id.toString(), p.toObject()])
+        );
+
+        // Construct full order data
+        const result = orders.map(order => ({
+            id: order.id,
+            createdAt: order.createdAt,
+            items: (itemsGrouped[order.id] || []).map(item => ({
+                ...item,
+                productDetails: productMap[item.productId] || null,
+            })),
+        }));
+
+        res.status(200).json(result);
+    } catch (err) {
+        console.error('Get orders error:', err);
+        res.status(500).json({ error: 'Failed to fetch orders', details: err });
+    }
 };
